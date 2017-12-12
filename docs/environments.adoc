@@ -1,0 +1,5 @@
+= Environments
+
+http://185.14.185.186/ - test environment
+
+http://46.101.62.243/ - production environment

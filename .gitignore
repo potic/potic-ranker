@@ -1,0 +1,15 @@
+# Intellij #
+.idea/
+out/
+*.iml
+*.iws
+*.ipr
+
+# Mac #
+.DS_Store
+
+# Compiled #
+*.pyc
+
+# Development environment #
+logs/
