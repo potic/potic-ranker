@@ -1,0 +1,17 @@
+= potic-ranker
+
+Service for ranking articles.
+
+== Travis job
+
+image:https://travis-ci.org/potic/potic-ranker.svg?branch=develop["Travis job", link="https://travis-ci.org/potic/potic-ranker"]
+
+== Docker repository
+
+https://hub.docker.com/r/potic/potic-ranker/
+
+== Documentation
+
+link:scripts/deploy[HOWTO: start service as docker container]
+
+link:docs/environments.adoc[Environments]
