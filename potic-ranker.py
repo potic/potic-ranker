@@ -14,30 +14,30 @@ if 'LOGZIO_TOKEN' in os.environ:
 if os.path.isfile('logzio-dev.properties'):
     with open('logzio-dev.properties', 'r') as logzioTokenFile:
         LOGZIO_TOKEN = logzioTokenFile.read().replace('\n', '')
-LOGGING_CONFIG = {
-    'version': 1,
-    'handlers': {
-        'LogzioHandler': {
-            'class': 'logzio.handler.LogzioHandler',
-            'formatter': 'logzioFormat',
-            'args': (LOGZIO_TOKEN)
-        }
-    },
-    'formatters': {
-        'logzioFormat': {
-            'format': {
-                'additional_field': 'value'
-            }
-        }
-    },
-    'loggers': {
-        'root': {
-            'handlers': 'LogzioHandler',
-            'level': 'INFO'
-        }
-    }
-}
-logging.config.dictConfig(LOGGING_CONFIG)
+# LOGGING_CONFIG = {
+#     'version': 1,
+#     'handlers': {
+#         'LogzioHandler': {
+#             'class': 'logzio.handler.LogzioHandler',
+#             'formatter': 'logzioFormat',
+#             'args': (LOGZIO_TOKEN)
+#         }
+#     },
+#     'formatters': {
+#         'logzioFormat': {
+#             'format': {
+#                 'additional_field': 'value'
+#             }
+#         }
+#     },
+#     'loggers': {
+#         'root': {
+#             'handlers': 'LogzioHandler',
+#             'level': 'INFO'
+#         }
+#     }
+# }
+# logging.config.dictConfig(LOGGING_CONFIG)
 
 app = Flask(__name__)
 
