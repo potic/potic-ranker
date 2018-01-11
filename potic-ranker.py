@@ -19,21 +19,21 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            'format': '%(asctime)s [%(thread)d] %(levelname)s %(module)s - %(message)s'
         },
         'logzioFormat': {
-            'format': '{"additional_field": "value"}'
+            'format': '{"env": "' + ENVIRONMENT_NAME + '", "service": "potic-ranker"}'
         }
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
+            'level': 'INFO' if ENVIRONMENT_NAME == "prod" else 'DEBUG',
             'formatter': 'verbose'
         },
         'logzio': {
             'class': 'logzio.handler.LogzioHandler',
-            'level': 'DEBUG',
+            'level': 'INFO' if ENVIRONMENT_NAME == "prod" else 'DEBUG',
             'formatter': 'logzioFormat',
             'token': LOGZIO_TOKEN,
             'logs_drain_timeout': 5,
@@ -44,7 +44,7 @@ LOGGING_CONFIG = {
     'loggers': {
         'potic-ranker': {
             'handlers': ['console', 'logzio'],
-            'level': 'DEBUG'
+            'level': 'INFO' if ENVIRONMENT_NAME == "prod" else 'DEBUG',
         }
     }
 }
@@ -56,21 +56,21 @@ app = Flask(__name__)
 @app.route('/actual')
 def actulRank():
     try:
-        logging.getLogger('potic-ranker').debug("receive GET request for /actual")
+        logging.getLogger('potic-ranker').debug("receive GET request for /actual", extra={'loglevel':'DEBUG'})
         return Response(response=json.dumps("random"), status=200, mimetype="application/json")
     except:
-        logging.getLogger('potic-ranker').error("GET request for /actual failed")
+        logging.getLogger('potic-ranker').error("GET request for /actual failed", extra={'loglevel':'ERROR'})
         return Response(status=500)
 
 @app.route('/rank/<rank_id>', methods=['POST'])
 def rank(rank_id):
     try:
-        logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + rank_id)
+        logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + rank_id, extra={'loglevel':'DEBUG'})
         article = request.json
         rank = random.random()
         return Response(response=json.dumps(rank), status=200, mimetype="application/json")
     except:
-        logging.getLogger('potic-ranker').error("POST request for /rank/" + rank_id + " failed")
+        logging.getLogger('potic-ranker').error("POST request for /rank/" + rank_id + " failed", extra={'loglevel':'ERROR'})
         return Response(status=500)
 
 
