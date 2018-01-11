@@ -14,30 +14,41 @@ if 'LOGZIO_TOKEN' in os.environ:
 if os.path.isfile('logzio-dev.properties'):
     with open('logzio-dev.properties', 'r') as logzioTokenFile:
         LOGZIO_TOKEN = logzioTokenFile.read().replace('\n', '')
-# LOGGING_CONFIG = {
-#     'version': 1,
-#     'handlers': {
-#         'LogzioHandler': {
-#             'class': 'logzio.handler.LogzioHandler',
-#             'formatter': 'logzioFormat',
-#             'args': (LOGZIO_TOKEN)
-#         }
-#     },
-#     'formatters': {
-#         'logzioFormat': {
-#             'format': {
-#                 'additional_field': 'value'
-#             }
-#         }
-#     },
-#     'loggers': {
-#         'root': {
-#             'handlers': 'LogzioHandler',
-#             'level': 'INFO'
-#         }
-#     }
-# }
-# logging.config.dictConfig(LOGGING_CONFIG)
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'logzioFormat': {
+            'format': '{"additional_field": "value"}'
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+            'formatter': 'verbose'
+        },
+        'logzio': {
+            'class': 'logzio.handler.LogzioHandler',
+            'level': 'INFO',
+            'formatter': 'logzioFormat',
+            'token': LOGZIO_TOKEN,
+            'logs_drain_timeout': 5,
+            'url': 'https://listener.logz.io:8071',
+            'debug': True
+        },
+    },
+    'loggers': {
+        'potic-ranker': {
+            'handlers': ['console', 'logzio'],
+            'level': 'INFO'
+        }
+    }
+}
+logging.config.dictConfig(LOGGING_CONFIG)
 
 app = Flask(__name__)
 
