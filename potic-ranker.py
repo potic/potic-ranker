@@ -44,7 +44,7 @@ LOGGING_CONFIG = {
     'loggers': {
         'potic-ranker': {
             'handlers': ['console', 'logzio'],
-            'level': 'INFO'
+            'level': 'DEBUG'
         }
     }
 }
