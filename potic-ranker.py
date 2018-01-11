@@ -15,6 +15,7 @@ if os.path.isfile('logzio-dev.properties'):
     with open('logzio-dev.properties', 'r') as logzioTokenFile:
         LOGZIO_TOKEN = logzioTokenFile.read().replace('\n', '')
 LOGGING_CONFIG = {
+    'version': 1,
     'handlers': {
         'keys': 'LogzioHandler'
     },
