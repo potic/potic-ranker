@@ -33,7 +33,7 @@ LOGGING_CONFIG = {
         },
         'logzio': {
             'class': 'logzio.handler.LogzioHandler',
-            'level': 'INFO',
+            'level': 'DEBUG',
             'formatter': 'logzioFormat',
             'token': LOGZIO_TOKEN,
             'logs_drain_timeout': 5,
