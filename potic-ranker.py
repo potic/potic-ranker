@@ -17,26 +17,23 @@ if os.path.isfile('logzio-dev.properties'):
 LOGGING_CONFIG = {
     'version': 1,
     'handlers': {
-        'keys': 'LogzioHandler'
-    },
-    'handler_LogzioHandler': {
-        'class': 'logzio.handler.LogzioHandler',
-        'formatter': 'logzioFormat',
-        'args': (LOGZIO_TOKEN)
+        'LogzioHandler': {
+            'class': 'logzio.handler.LogzioHandler',
+            'formatter': 'logzioFormat',
+            'args': (LOGZIO_TOKEN)
+        }
     },
     'formatters': {
-        'keys': 'logzioFormat'
+        'logzioFormat': {
+            'format': {
+                'additional_field': 'value'
+            }
+        }
     },
     'loggers': {
-        'keys': 'root'
-    },
-    'logger_root': {
-        'handlers': 'LogzioHandler',
-        'level': 'INFO',
-    },
-    'formatter_logzioFormat': {
-        'format': {
-            'additional_field': 'value'
+        'root': {
+            'handlers': 'LogzioHandler',
+            'level': 'INFO'
         }
     }
 }
