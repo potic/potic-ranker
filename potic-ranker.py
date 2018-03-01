@@ -5,6 +5,11 @@ import os
 import logging
 import logging.config
 
+from sklearn.base import BaseEstimator, TransformerMixin
+import sklearn.preprocessing
+import pickle
+import numpy as np
+
 ENVIRONMENT_NAME = "dev"
 if 'ENVIRONMENT_NAME' in os.environ:
     ENVIRONMENT_NAME = os.environ['ENVIRONMENT_NAME']
@@ -53,11 +58,25 @@ logging.config.dictConfig(LOGGING_CONFIG)
 app = Flask(__name__)
 
 
+class CustomBinarizer(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def transform(self, X):
+        source_tr = sklearn.preprocessing.LabelBinarizer().fit(X["source"]).transform(X["source"])
+        return np.column_stack((X["word_count"], source_tr))
+
+model = None
+if os.path.isfile('serialized_model'):
+    with open('serialized_model', 'r') as serialized_model_file:
+        model = pickle.loads(serialized_model_file.read())
+
+
 @app.route('/actual')
 def actulRank():
     try:
         logging.getLogger('potic-ranker').debug("receive GET request for /actual", extra={'loglevel':'DEBUG'})
-        return Response(response=json.dumps("random"), status=200, mimetype="application/json")
+        return Response(response=json.dumps("logreg"), status=200, mimetype="application/json")
     except:
         logging.getLogger('potic-ranker').error("GET request for /actual failed", extra={'loglevel':'ERROR'})
         return Response(status=500)
@@ -67,7 +86,13 @@ def rank(rank_id):
     try:
         logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + rank_id, extra={'loglevel':'DEBUG'})
         article = request.json
-        rank = random.random()
+        source = article["card"]["source"]
+        word_count = int(article["fromPocket"]["word_count"])
+        model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
+        rank = model.predict_proba(model_input)[0][1]
+        logging.getLogger('potic-ranker').debug("received word_count " + word_count + ", source " + source + ", calculated rank " + rank,
+                                                extra={'loglevel': 'DEBUG'})
+        #rank = random.random()
         return Response(response=json.dumps(rank), status=200, mimetype="application/json")
     except:
         logging.getLogger('potic-ranker').error("POST request for /rank/" + rank_id + " failed", extra={'loglevel':'ERROR'})

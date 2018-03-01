@@ -1,3 +1,6 @@
 Flask
 requests
 logzio-python-handler
+numpy
+pickle
+sklearn
