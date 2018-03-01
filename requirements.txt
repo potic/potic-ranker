@@ -2,5 +2,4 @@ Flask
 requests
 logzio-python-handler
 numpy
-cPickle
 sklearn
