@@ -87,8 +87,8 @@ def rank(rank_id):
     try:
         logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + rank_id, extra={'loglevel':'DEBUG'})
         article = request.json
-        source = article["card"]["source"]
-        word_count = int(article["fromPocket"]["word_count"])
+        source = article["card"]["source"] if "card" in article else ""
+        word_count = int(article["fromPocket"]["word_count"]) if "fromPocket" in article else 0
         model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
         rank = model.predict_proba(model_input)[0][1]
         logging.getLogger('potic-ranker').debug("received word_count " + word_count + ", source " + source + ", calculated rank " + rank,
