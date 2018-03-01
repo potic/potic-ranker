@@ -60,10 +60,11 @@ app = Flask(__name__)
 
 class CustomBinarizer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None, **fit_params):
+        self.binarizer = sklearn.preprocessing.LabelBinarizer().fit(X["source"])
         return self
 
     def transform(self, X):
-        source_tr = sklearn.preprocessing.LabelBinarizer().fit(X["source"]).transform(X["source"])
+        source_tr = self.binarizer.transform(X["source"])
         return np.column_stack((X["word_count"], source_tr))
 
 model = None
