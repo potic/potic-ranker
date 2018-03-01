@@ -91,7 +91,7 @@ def rank(rank_id):
         word_count = int(article["fromPocket"]["word_count"]) if "fromPocket" in article else 0
         model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
         rank = model.predict_proba(model_input)[0][1]
-        logging.getLogger('potic-ranker').debug("received word_count " + word_count + ", source " + source + ", calculated rank " + rank,
+        logging.getLogger('potic-ranker').debug("received word_count " + str(word_count) + ", source " + str(source) + ", calculated rank " + str(rank),
                                                 extra={'loglevel': 'DEBUG'})
         #rank = random.random()
         return Response(response=json.dumps(rank), status=200, mimetype="application/json")
