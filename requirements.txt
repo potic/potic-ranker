@@ -3,3 +3,4 @@ requests
 logzio-python-handler
 numpy
 sklearn
+scipy
