@@ -85,7 +85,7 @@ def actulRank():
 @app.route('/rank/<rank_id>', methods=['POST'])
 def rank(rank_id):
     try:
-        logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + rank_id, extra={'loglevel':'DEBUG'})
+        logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + rank_id + "; body=" + str(request.json), extra={'loglevel':'DEBUG'})
         article = request.json
         source = article["card"]["source"] if "card" in article else ""
         word_count = int(article["fromPocket"]["word_count"]) if "fromPocket" in article else 0
