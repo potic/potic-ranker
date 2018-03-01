@@ -96,7 +96,7 @@ def rank(rank_id):
         #rank = random.random()
         return Response(response=json.dumps(rank), status=200, mimetype="application/json")
     except Exception as e:
-        logging.getLogger('potic-ranker').error("POST request for /rank/" + rank_id + " failed: " + e, extra={'loglevel':'ERROR'})
+        logging.getLogger('potic-ranker').error("POST request for /rank/" + rank_id + " failed: " + str(e), extra={'loglevel':'ERROR'})
         return Response(status=500)
 
 
