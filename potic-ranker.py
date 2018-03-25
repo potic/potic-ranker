@@ -96,6 +96,8 @@ if os.path.isfile('serialized_model'):
     with open('serialized_model', 'r') as serialized_model_file:
         model = pickle.loads(serialized_model_file.read())
 
+app = Flask(__name__)
+
 
 @app.route('/rank/<rank_id>', methods=['POST'])
 def rank(rank_id):
