@@ -96,35 +96,27 @@ if os.path.isfile('serialized_model'):
     with open('serialized_model', 'r') as serialized_model_file:
         model = pickle.loads(serialized_model_file.read())
 
-model_id = "logreg:0.1"
-
-app = Flask(__name__)
-
-
-@app.route('/actual')
-def actulRank():
-    try:
-        logging.getLogger('potic-ranker').debug("receive GET request for /actual", extra={'loglevel':'DEBUG'})
-        return Response(response=json.dumps(model_id), status=200, mimetype="application/json")
-    except:
-        logging.getLogger('potic-ranker').error("GET request for /actual failed", extra={'loglevel':'ERROR'})
-        return Response(status=500)
 
 @app.route('/rank/<rank_id>', methods=['POST'])
 def rank(rank_id):
     try:
-        if rank_id == model_id:
-            logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + str(rank_id) + "; body=" + str(request.json), extra={'loglevel':'DEBUG'})
-            article = request.json
+        logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + str(rank_id) + "; body=" + str(request.json), extra={'loglevel':'DEBUG'})
+        article = request.json
+
+        if rank_id == "logreg:0.1":
             source = article["card"]["source"] if "card" in article else ""
             word_count = int(article["fromPocket"]["word_count"]) if "fromPocket" in article else 0
             model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
             rank = model.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("received word_count " + str(word_count) + ", source " + str(source) + ", calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
-        else:
-            logging.getLogger('potic-ranker').error("Unknown model " + str(rank_id), extra={'loglevel':'ERROR'})
-            return Response(status=404)
+
+        if rank_id == "random:1.0":
+            rank = random.random()
+            return Response(response=json.dumps(rank), status=200, mimetype="application/json")
+
+        logging.getLogger('potic-ranker').error("Unknown model " + str(rank_id), extra={'loglevel':'ERROR'})
+        return Response(status=404)
     except Exception as e:
         logging.getLogger('potic-ranker').error("POST request for /rank/" + str(rank_id) + " failed: " + str(e), extra={'loglevel':'ERROR'})
         return Response(status=500)
