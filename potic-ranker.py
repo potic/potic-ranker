@@ -91,10 +91,26 @@ class CustomBinarizer(BaseEstimator, TransformerMixin):
         source_tr = self.binarizer.transform(X["source"])
         return np.column_stack((X["word_count"], source_tr))
 
-model = None
+
+class CustomBinarizerNB(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None, **fit_params):
+        self.binarizer = sklearn.preprocessing.LabelBinarizer().fit(X["source"])
+        return self
+
+    def transform(self, X):
+        source_tr = self.binarizer.transform(X["source"])
+        return np.column_stack((X["word_count"], X["skipped_count"], X["showed_count"], source_tr))
+
+model_logreg = None
 if os.path.isfile('serialized_model'):
     with open('serialized_model', 'r') as serialized_model_file:
-        model = pickle.loads(serialized_model_file.read())
+        model_logreg = pickle.loads(serialized_model_file.read())
+
+model_nb = None
+if os.path.isfile('serialized_nb'):
+    with open('serialized_nb', 'r') as serialized_model_file:
+        model_nb = pickle.loads(serialized_model_file.read())
+
 
 app = Flask(__name__)
 
@@ -109,7 +125,15 @@ def rank(rank_id):
             source = article["card"]["source"] if "card" in article else ""
             word_count = int(article["fromPocket"]["word_count"]) if "fromPocket" in article else 0
             model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
-            rank = model.predict_proba(model_input)[0][1]
+            rank = model_logreg.predict_proba(model_input)[0][1]
+            logging.getLogger('potic-ranker').debug("received word_count " + str(word_count) + ", source " + str(source) + ", calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
+            return Response(response=json.dumps(rank), status=200, mimetype="application/json")
+
+        if rank_id == "nb:0.1":
+            source = article["card"]["source"] if "card" in article else ""
+            word_count = int(article["fromPocket"]["word_count"]) if "fromPocket" in article else 0
+            model_input = np.array([(word_count, 0, 0, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
+            rank = model_nb.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("received word_count " + str(word_count) + ", source " + str(source) + ", calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
