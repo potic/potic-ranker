@@ -119,22 +119,24 @@ app = Flask(__name__)
 def rank(rank_id):
     try:
         logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + str(rank_id) + "; body=" + str(request.json), extra={'loglevel':'DEBUG'})
+
         article = request.json
 
+        source = article["source"] if "source" in article else ""
+        word_count = int(article["word_count"]) if "word_count" in article else 0
+        skipped_count = int(article["skipped_count"]) if "skipped_count" in article else 0
+        showed_count = int(article["showed_count"]) if "showed_count" in article else 0
+
         if rank_id == "logreg:0.1":
-            source = article["card"]["source"] if "card" in article else ""
-            word_count = int(article["fromPocket"]["word_count"]) if "fromPocket" in article else 0
             model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
             rank = model_logreg.predict_proba(model_input)[0][1]
-            logging.getLogger('potic-ranker').debug("received word_count " + str(word_count) + ", source " + str(source) + ", calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
+            logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
-        if rank_id == "nb:0.1":
-            source = article["card"]["source"] if "card" in article else ""
-            word_count = int(article["fromPocket"]["word_count"]) if "fromPocket" in article else 0
-            model_input = np.array([(word_count, 0, 0, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
+        if rank_id == "nb:0.2":
+            model_input = np.array([(word_count, skipped_count, skipped_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
             rank = model_nb.predict_proba(model_input)[0][1]
-            logging.getLogger('potic-ranker').debug("received word_count " + str(word_count) + ", source " + str(source) + ", calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
+            logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
         if rank_id == "random:1.0":
