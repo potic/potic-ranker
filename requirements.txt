@@ -4,3 +4,4 @@ logzio-python-handler
 numpy
 sklearn
 scipy
+pymongo

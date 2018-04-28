@@ -4,6 +4,7 @@ import random
 import os
 import logging
 import logging.config
+from pymongo import MongoClient
 
 from sklearn.base import BaseEstimator, TransformerMixin
 import sklearn.preprocessing
@@ -13,6 +14,22 @@ import numpy as np
 ENVIRONMENT_NAME = "dev"
 if 'ENVIRONMENT_NAME' in os.environ:
     ENVIRONMENT_NAME = os.environ['ENVIRONMENT_NAME']
+
+MONGO_HOST = 'potic-mongodb'
+MONGO_PORT = 27017
+MONGO_DATABASE = 'potic'
+MONGO_AUTH_DATABASE = 'admin'
+MONGO_USERNAME = 'poticModels'
+MONGO_PASSWORD = ''
+if 'MONGO_PASSWORD' in os.environ:
+    MONGO_PASSWORD = os.environ['MONGO_PASSWORD']
+
+if ENVIRONMENT_NAME == 'dev':
+    MONGO_HOST = '185.14.185.186'
+
+mongo_client = MongoClient(host=MONGO_HOST, port=MONGO_PORT, username=MONGO_USERNAME, password=MONGO_PASSWORD, authSource=MONGO_AUTH_DATABASE)
+potic_mongodb = mongo_client[MONGO_DATABASE]
+models_mongodb = potic_mongodb.model
 
 LOGZIO_TOKEN = None
 if 'LOGZIO_TOKEN' in os.environ:
@@ -101,27 +118,6 @@ class CustomBinarizerNB(BaseEstimator, TransformerMixin):
         source_tr = self.binarizer.transform(X["source"])
         return np.column_stack((X["word_count"], X["skipped_count"], X["showed_count"], source_tr))
 
-serialized_model_logreg = None
-model_logreg = None
-if os.path.isfile('serialized_logreg'):
-    with open('serialized_logreg', 'r') as serialized_model_file:
-        serialized_model_logreg = serialized_model_file.read()
-        model_logreg = pickle.loads(serialized_model_logreg)
-
-serialized_model_nbayes = None
-model_nbayes = None
-if os.path.isfile('serialized_nbayes'):
-    with open('serialized_nbayes', 'r') as serialized_model_file:
-        serialized_model_nbayes = serialized_model_file.read()
-        model_nbayes = pickle.loads(serialized_model_nbayes)
-
-serialized_model_svm = None
-model_svm = None
-if os.path.isfile('serialized_svm'):
-    with open('serialized_svm', 'r') as serialized_model_file:
-        serialized_model_svm = serialized_model_file.read()
-        model_svm = pickle.loads(serialized_model_svm)
-
 random_model = { 'name': 'random', 'version': '1.0', 'description': 'random ranks' }
 logreg_model = { 'name': 'logreg', 'version': '1.0', 'description': 'logistic regression (source, words count)' }
 nbayes_model = { 'name': 'nbayes', 'version': '1.0', 'description': 'Bernoulli naive bayes (source, words count, showed count, skipped count)' }
@@ -189,18 +185,27 @@ def rank(model_id):
         showed_count = int(article["showed_count"]) if "showed_count" in article else 0
 
         if model_id == logreg_model["name"] + ":" + logreg_model["version"]:
+            serialized_model_logreg = models_mongodb.find_one( { 'name': logreg_model["name"], 'version': logreg_model["version"] } ).serializedModel
+            model_logreg = pickle.loads(serialized_model_logreg)
+
             model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
             rank = model_logreg.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
         if model_id == nbayes_model["name"] + ":" + nbayes_model["version"]:
+            serialized_model_nbayes = models_mongodb.find_one( { 'name': nbayes_model["name"], 'version': nbayes_model["version"] } ).serializedModel
+            model_nbayes = pickle.loads(serialized_model_nbayes)
+
             model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
             rank = model_nbayes.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
         if model_id == svm_model["name"] + ":" + svm_model["version"]:
+            serialized_model_svm = models_mongodb.find_one( { 'name': svm_model["name"], 'version': svm_model["version"] } ).serializedModel
+            model_svm = pickle.loads(serialized_model_svm)
+
             model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
             rank = model_svm.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
