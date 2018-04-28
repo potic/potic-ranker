@@ -126,23 +126,23 @@ random_model = { 'name': 'random', 'version': '1.0', 'description': 'random rank
 logreg_model = { 'name': 'logreg', 'version': '1.0', 'description': 'logistic regression (source, words count)' }
 nbayes_model = { 'name': 'nbayes', 'version': '1.0', 'description': 'Bernoulli naive bayes (source, words count, showed count, skipped count)' }
 svm_model = { 'name': 'svm', 'version': '1.0', 'description': 'svm (source, words count, showed count, skipped count)' }
-all_ranks = [ random_model, logreg_model, nbayes_model, svm_model ]
+all_models = [ random_model, logreg_model, nbayes_model, svm_model ]
 
 app = Flask(__name__)
 
 
 @app.route('/model', methods=['GET'])
-def ranks():
+def models():
     try:
         logging.getLogger('potic-ranker').debug("receive GET request for /model", extra={'loglevel':'DEBUG'})
-        return Response(response=json.dumps(all_ranks), status=200, mimetype="application/json")
+        return Response(response=json.dumps(all_models), status=200, mimetype="application/json")
     except Exception as e:
         logging.getLogger('potic-ranker').error("GET request for /model failed: " + str(e), extra={'loglevel':'ERROR'})
         return Response(status=500)
 
 
 @app.route('/model/<model_id>', methods=['POST'])
-def rank(model_id):
+def model(model_id):
     try:
         logging.getLogger('potic-ranker').debug("receive POST request for /model/" + str(model_id) + "; body=" + str(request.json), extra={'loglevel':'DEBUG'})
 
