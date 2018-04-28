@@ -152,22 +152,22 @@ def model(model_id):
             if os.path.isfile('serialized_logreg'):
                 with open('serialized_logreg', 'r') as serialized_model_file:
                     serialized_model_logreg = serialized_model_file.read()
-                    return Response(response=serialized_model_logreg, status=200, mimetype="application/json")
+                    return Response(response=json.dumps({ 'serialized_model': serialized_model_logreg }), status=200, mimetype="application/json")
 
         if model_id == nbayes_model["name"] + ":" + nbayes_model["version"]:
             if os.path.isfile('serialized_nbayes'):
                 with open('serialized_nbayes', 'r') as serialized_model_file:
                     serialized_model_nbayes = serialized_model_file.read()
-                    return Response(response=serialized_model_nbayes, status=200, mimetype="application/json")
+                    return Response(response=json.dumps({ 'serialized_model': serialized_model_nbayes }), status=200, mimetype="application/json")
 
         if model_id == svm_model["name"] + ":" + svm_model["version"]:
             if os.path.isfile('serialized_svm'):
                 with open('serialized_svm', 'r') as serialized_model_file:
                     serialized_model_svm = serialized_model_file.read()
-                    return Response(response=serialized_model_svm, status=200, mimetype="application/json")
+                    return Response(response=json.dumps({ 'serialized_model': serialized_model_svm }), status=200, mimetype="application/json")
 
         if model_id == random_model["name"] + ":" + random_model["version"]:
-            return Response(response='', status=200, mimetype="application/json")
+            return Response(response=json.dumps({ 'serialized_model': '' }), status=200, mimetype="application/json")
 
         logging.getLogger('potic-ranker').error("Unknown model " + str(model_id), extra={'loglevel':'ERROR'})
         return Response(status=404)
