@@ -120,7 +120,7 @@ random_model = { 'name': 'random', 'version': '1.0', 'description': 'random rank
 logreg_model = { 'name': 'logreg', 'version': '1.0', 'description': 'logistic regression (source, words count)' }
 nbayes_model = { 'name': 'nbayes', 'version': '1.0', 'description': 'Bernoulli naive bayes (source, words count, showed count, skipped count)' }
 svm_model = { 'name': 'svm', 'version': '1.0', 'description': 'svm (source, words count, showed count, skipped count)' }
-ranks = [ random_model, logreg_model, nbayes_model, svm_model ]
+all_ranks = [ random_model, logreg_model, nbayes_model, svm_model ]
 
 app = Flask(__name__)
 
@@ -129,7 +129,7 @@ app = Flask(__name__)
 def ranks():
     try:
         logging.getLogger('potic-ranker').debug("receive GET request for /ranks", extra={'loglevel':'DEBUG'})
-        return Response(response=json.dumps(ranks), status=200, mimetype="application/json")
+        return Response(response=json.dumps(all_ranks), status=200, mimetype="application/json")
     except Exception as e:
         logging.getLogger('potic-ranker').error("GET request for /ranks failed: " + str(e), extra={'loglevel':'ERROR'})
         return Response(status=500)
