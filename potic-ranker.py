@@ -185,7 +185,7 @@ def rank(model_id):
         showed_count = int(article["showed_count"]) if "showed_count" in article else 0
 
         if model_id == logreg_model["name"] + ":" + logreg_model["version"]:
-            serialized_model_logreg = models_mongodb.find_one( { 'name': logreg_model["name"], 'version': logreg_model["version"] } ).serializedModel
+            serialized_model_logreg = models_mongodb.find_one( { 'name': logreg_model["name"], 'version': logreg_model["version"] } )["serializedModel"]
             model_logreg = pickle.loads(serialized_model_logreg)
 
             model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
@@ -194,7 +194,7 @@ def rank(model_id):
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
         if model_id == nbayes_model["name"] + ":" + nbayes_model["version"]:
-            serialized_model_nbayes = models_mongodb.find_one( { 'name': nbayes_model["name"], 'version': nbayes_model["version"] } ).serializedModel
+            serialized_model_nbayes = models_mongodb.find_one( { 'name': nbayes_model["name"], 'version': nbayes_model["version"] } )["serializedModel"]
             model_nbayes = pickle.loads(serialized_model_nbayes)
 
             model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
@@ -203,7 +203,7 @@ def rank(model_id):
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
         if model_id == svm_model["name"] + ":" + svm_model["version"]:
-            serialized_model_svm = models_mongodb.find_one( { 'name': svm_model["name"], 'version': svm_model["version"] } ).serializedModel
+            serialized_model_svm = models_mongodb.find_one( { 'name': svm_model["name"], 'version': svm_model["version"] } )["serializedModel"]
             model_svm = pickle.loads(serialized_model_svm)
 
             model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
