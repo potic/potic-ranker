@@ -37,7 +37,7 @@ if 'LOGZIO_TOKEN' in os.environ:
 if os.path.isfile('logzio-dev.properties'):
     with open('logzio-dev.properties', 'r') as logzioTokenFile:
         LOGZIO_TOKEN = logzioTokenFile.read().replace('\n', '')
-if LOGZIO_TOKEN != None:
+if LOGZIO_TOKEN is not None:
     LOGGING_CONFIG = {
         'version': 1,
         'disable_existing_loggers': False,
@@ -179,10 +179,10 @@ def rank(model_id):
 
         article = request.json
 
-        source = article["source"] if "source" in article else ""
-        word_count = int(article["word_count"]) if "word_count" in article else 0
-        skipped_count = int(article["skipped_count"]) if "skipped_count" in article else 0
-        showed_count = int(article["showed_count"]) if "showed_count" in article else 0
+        source = article["source"] if article["source"] is not None else ""
+        word_count = int(article["word_count"]) if article["word_count"] is not None else 0
+        skipped_count = int(article["skipped_count"]) if article["skipped_count"] is not None else 0
+        showed_count = int(article["showed_count"]) if article["showed_count"] is not None else 0
 
         if model_id == logreg_model["name"] + ":" + logreg_model["version"]:
             serialized_model_logreg = models_mongodb.find_one( { 'name': logreg_model["name"], 'version': logreg_model["version"] } )["serializedModel"]
