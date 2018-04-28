@@ -116,8 +116,23 @@ if os.path.isfile('serialized_svm'):
     with open('serialized_svm', 'r') as serialized_model_file:
         model_svm = pickle.loads(serialized_model_file.read())
 
+random_model = { 'name': 'random', 'version': '1.0', 'description': 'random ranks' }
+logreg_model = { 'name': 'logreg', 'version': '1.0', 'description': 'logistic regression (source, words count)' }
+nbayes_model = { 'name': 'nbayes', 'version': '1.0', 'description': 'Bernoulli naive bayes (source, words count, showed count, skipped count)' }
+svm_model = { 'name': 'svm', 'version': '1.0', 'description': 'svm (source, words count, showed count, skipped count)' }
+ranks = [ random_model, logreg_model, nbayes_model, svm_model ]
 
 app = Flask(__name__)
+
+
+@app.route('/ranks', methods=['GET'])
+def ranks():
+    try:
+        logging.getLogger('potic-ranker').debug("receive GET request for /ranks", extra={'loglevel':'DEBUG'})
+        return Response(response=json.dumps(ranks), status=200, mimetype="application/json")
+    except Exception as e:
+        logging.getLogger('potic-ranker').error("GET request for /ranks failed: " + str(e), extra={'loglevel':'ERROR'})
+        return Response(status=500)
 
 
 @app.route('/rank/<rank_id>', methods=['POST'])
@@ -132,25 +147,25 @@ def rank(rank_id):
         skipped_count = int(article["skipped_count"]) if "skipped_count" in article else 0
         showed_count = int(article["showed_count"]) if "showed_count" in article else 0
 
-        if rank_id == "logreg:0.1":
+        if rank_id == logreg_model["name"] + ":" + logreg_model["version"]:
             model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
             rank = model_logreg.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
-        if rank_id == "nb:0.3":
-            model_input = np.array([(word_count, skipped_count, skipped_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
+        if rank_id == nbayes_model["name"] + ":" + nbayes_model["version"]:
+            model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
             rank = model_nb.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
-        if rank_id == "svm:0.1":
-            model_input = np.array([(word_count, skipped_count, skipped_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
+        if rank_id == svm_model["name"] + ":" + svm_model["version"]:
+            model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
             rank = model_svm.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
-        if rank_id == "random:1.0":
+        if rank_id == random_model["name"] + ":" + random_model["version"]:
             rank = random.random()
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
