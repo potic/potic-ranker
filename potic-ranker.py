@@ -101,20 +101,26 @@ class CustomBinarizerNB(BaseEstimator, TransformerMixin):
         source_tr = self.binarizer.transform(X["source"])
         return np.column_stack((X["word_count"], X["skipped_count"], X["showed_count"], source_tr))
 
+serialized_model_logreg = None
 model_logreg = None
-if os.path.isfile('serialized_model'):
-    with open('serialized_model', 'r') as serialized_model_file:
-        model_logreg = pickle.loads(serialized_model_file.read())
+if os.path.isfile('serialized_logreg'):
+    with open('serialized_logreg', 'r') as serialized_model_file:
+        serialized_model_logreg = serialized_model_file.read()
+        model_logreg = pickle.loads(serialized_model_logreg)
 
-model_nb = None
-if os.path.isfile('serialized_nb'):
-    with open('serialized_nb', 'r') as serialized_model_file:
-        model_nb = pickle.loads(serialized_model_file.read())
+serialized_model_nbayes = None
+model_nbayes = None
+if os.path.isfile('serialized_nbayes'):
+    with open('serialized_nbayes', 'r') as serialized_model_file:
+        serialized_model_nbayes = serialized_model_file.read()
+        model_nbayes = pickle.loads(serialized_model_nbayes)
 
+serialized_model_svm = None
 model_svm = None
 if os.path.isfile('serialized_svm'):
     with open('serialized_svm', 'r') as serialized_model_file:
-        model_svm = pickle.loads(serialized_model_file.read())
+        serialized_model_svm = serialized_model_file.read()
+        model_svm = pickle.loads(serialized_model_svm)
 
 random_model = { 'name': 'random', 'version': '1.0', 'description': 'random ranks' }
 logreg_model = { 'name': 'logreg', 'version': '1.0', 'description': 'logistic regression (source, words count)' }
@@ -125,20 +131,55 @@ all_ranks = [ random_model, logreg_model, nbayes_model, svm_model ]
 app = Flask(__name__)
 
 
-@app.route('/ranks', methods=['GET'])
+@app.route('/model', methods=['GET'])
 def ranks():
     try:
-        logging.getLogger('potic-ranker').debug("receive GET request for /ranks", extra={'loglevel':'DEBUG'})
+        logging.getLogger('potic-ranker').debug("receive GET request for /model", extra={'loglevel':'DEBUG'})
         return Response(response=json.dumps(all_ranks), status=200, mimetype="application/json")
     except Exception as e:
-        logging.getLogger('potic-ranker').error("GET request for /ranks failed: " + str(e), extra={'loglevel':'ERROR'})
+        logging.getLogger('potic-ranker').error("GET request for /model failed: " + str(e), extra={'loglevel':'ERROR'})
         return Response(status=500)
 
 
-@app.route('/rank/<rank_id>', methods=['POST'])
-def rank(rank_id):
+@app.route('/model/<model_id>', methods=['POST'])
+def rank(model_id):
     try:
-        logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + str(rank_id) + "; body=" + str(request.json), extra={'loglevel':'DEBUG'})
+        logging.getLogger('potic-ranker').debug("receive POST request for /model/" + str(model_id) + "; body=" + str(request.json), extra={'loglevel':'DEBUG'})
+
+        articles = request.json
+
+        if model_id == logreg_model["name"] + ":" + logreg_model["version"]:
+            if os.path.isfile('serialized_logreg'):
+                with open('serialized_logreg', 'r') as serialized_model_file:
+                    serialized_model_logreg = serialized_model_file.read()
+                    return Response(response=serialized_model_logreg, status=200, mimetype="application/json")
+
+        if model_id == nbayes_model["name"] + ":" + nbayes_model["version"]:
+            if os.path.isfile('serialized_nbayes'):
+                with open('serialized_nbayes', 'r') as serialized_model_file:
+                    serialized_model_nbayes = serialized_model_file.read()
+                    return Response(response=serialized_model_nbayes, status=200, mimetype="application/json")
+
+        if model_id == svm_model["name"] + ":" + svm_model["version"]:
+            if os.path.isfile('serialized_svm'):
+                with open('serialized_svm', 'r') as serialized_model_file:
+                    serialized_model_svm = serialized_model_file.read()
+                    return Response(response=serialized_model_svm, status=200, mimetype="application/json")
+
+        if model_id == random_model["name"] + ":" + random_model["version"]:
+            return Response(response='', status=200, mimetype="application/json")
+
+        logging.getLogger('potic-ranker').error("Unknown model " + str(model_id), extra={'loglevel':'ERROR'})
+        return Response(status=404)
+    except Exception as e:
+        logging.getLogger('potic-ranker').error("POST request for /model/" + str(model_id) + " failed: " + str(e), extra={'loglevel':'ERROR'})
+        return Response(status=500)
+
+
+@app.route('/rank/<model_id>', methods=['POST'])
+def rank(model_id):
+    try:
+        logging.getLogger('potic-ranker').debug("receive POST request for /rank/" + str(model_id) + "; body=" + str(request.json), extra={'loglevel':'DEBUG'})
 
         article = request.json
 
@@ -147,32 +188,32 @@ def rank(rank_id):
         skipped_count = int(article["skipped_count"]) if "skipped_count" in article else 0
         showed_count = int(article["showed_count"]) if "showed_count" in article else 0
 
-        if rank_id == logreg_model["name"] + ":" + logreg_model["version"]:
+        if model_id == logreg_model["name"] + ":" + logreg_model["version"]:
             model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
             rank = model_logreg.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
-        if rank_id == nbayes_model["name"] + ":" + nbayes_model["version"]:
+        if model_id == nbayes_model["name"] + ":" + nbayes_model["version"]:
             model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
-            rank = model_nb.predict_proba(model_input)[0][1]
+            rank = model_nbayes.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
-        if rank_id == svm_model["name"] + ":" + svm_model["version"]:
+        if model_id == svm_model["name"] + ":" + svm_model["version"]:
             model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
             rank = model_svm.predict_proba(model_input)[0][1]
             logging.getLogger('potic-ranker').debug("calculated rank " + str(rank), extra={'loglevel': 'DEBUG'})
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
-        if rank_id == random_model["name"] + ":" + random_model["version"]:
+        if model_id == random_model["name"] + ":" + random_model["version"]:
             rank = random.random()
             return Response(response=json.dumps(rank), status=200, mimetype="application/json")
 
-        logging.getLogger('potic-ranker').error("Unknown model " + str(rank_id), extra={'loglevel':'ERROR'})
+        logging.getLogger('potic-ranker').error("Unknown model " + str(model_id), extra={'loglevel':'ERROR'})
         return Response(status=404)
     except Exception as e:
-        logging.getLogger('potic-ranker').error("POST request for /rank/" + str(rank_id) + " failed: " + str(e), extra={'loglevel':'ERROR'})
+        logging.getLogger('potic-ranker').error("POST request for /rank/" + str(model_id) + " failed: " + str(e), extra={'loglevel':'ERROR'})
         return Response(status=500)
 
 
