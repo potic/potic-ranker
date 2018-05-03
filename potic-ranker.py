@@ -5,11 +5,16 @@ import os
 import logging
 import logging.config
 from pymongo import MongoClient
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 from sklearn.base import BaseEstimator, TransformerMixin
 import sklearn.preprocessing
 import pickle
 import numpy as np
+import pandas as pd
 
 ENVIRONMENT_NAME = "dev"
 if 'ENVIRONMENT_NAME' in os.environ:
@@ -124,6 +129,9 @@ nbayes_model = { 'name': 'nbayes', 'version': '1.0', 'description': 'Bernoulli n
 svm_model = { 'name': 'svm', 'version': '1.0', 'description': 'svm (source, words count, showed count, skipped count)' }
 all_models = [ random_model, logreg_model, nbayes_model, svm_model ]
 
+all_models_map = {nbayes_model['name']: BernoulliNB(), svm_model['name']: SVC(gamma=2, C=1, probability=True)}
+
+
 app = Flask(__name__)
 
 
@@ -137,12 +145,21 @@ def models():
         return Response(status=500)
 
 
+def train_model(model_name, train_data):
+    Y = train_data["liked_count"]
+    pipeline = Pipeline([('transform', CustomBinarizerNB()), ('scaler', StandardScaler()), ('model', all_models_map[model_name])])
+    model = pipeline.fit(train_data, Y)
+    return model
+
+
+
 @app.route('/model/<model_id>', methods=['POST'])
 def model(model_id):
     try:
         logging.getLogger('potic-ranker').debug("receive POST request for /model/" + str(model_id) + "; body=" + str(request.json), extra={'loglevel':'DEBUG'})
 
         articles = request.json
+        df = pd.DataFrame(articles)
 
         if model_id == logreg_model["name"] + ":" + logreg_model["version"]:
             if os.path.isfile('serialized_logreg'):
@@ -151,16 +168,12 @@ def model(model_id):
                     return Response(response=json.dumps({ 'serialized_model': serialized_model_logreg }), status=200, mimetype="application/json")
 
         if model_id == nbayes_model["name"] + ":" + nbayes_model["version"]:
-            if os.path.isfile('serialized_nbayes'):
-                with open('serialized_nbayes', 'r') as serialized_model_file:
-                    serialized_model_nbayes = serialized_model_file.read()
-                    return Response(response=json.dumps({ 'serialized_model': serialized_model_nbayes }), status=200, mimetype="application/json")
+            serialized_model_nbayes = pickle.dumps(train_model(nbayes_model['name'], df))
+            return Response(response=json.dumps({ 'serialized_model': serialized_model_nbayes }), status=200, mimetype="application/json")
 
         if model_id == svm_model["name"] + ":" + svm_model["version"]:
-            if os.path.isfile('serialized_svm'):
-                with open('serialized_svm', 'r') as serialized_model_file:
-                    serialized_model_svm = serialized_model_file.read()
-                    return Response(response=json.dumps({ 'serialized_model': serialized_model_svm }), status=200, mimetype="application/json")
+            serialized_model_svm = pickle.dumps(train_model(svm_model['name'], df))
+            return Response(response=json.dumps({ 'serialized_model': serialized_model_svm }), status=200, mimetype="application/json")
 
         if model_id == random_model["name"] + ":" + random_model["version"]:
             return Response(response=json.dumps({ 'serialized_model': '' }), status=200, mimetype="application/json")
