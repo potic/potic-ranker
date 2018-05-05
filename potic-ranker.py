@@ -5,6 +5,7 @@ import os
 import logging
 import logging.config
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 from gridfs import GridFS
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.svm import SVC
@@ -201,7 +202,7 @@ def rank(model_id):
 
         if model_id == logreg_model["name"] + ":" + logreg_model["version"]:
             serialized_model_logreg_id = models_mongodb.find_one( { 'name': logreg_model["name"], 'version': logreg_model["version"] } )["serializedModelId"]
-            serialized_model_logreg = potic_gridfs.get(serialized_model_logreg_id)
+            serialized_model_logreg = potic_gridfs.get(ObjectId(serialized_model_logreg_id)).read()
             model_logreg = pickle.loads(serialized_model_logreg)
 
             model_input = np.array([(word_count, source)], dtype=[('word_count', 'int'), ('source', 'object')])
@@ -211,7 +212,7 @@ def rank(model_id):
 
         if model_id == nbayes_model["name"] + ":" + nbayes_model["version"]:
             serialized_model_nbayes_id = models_mongodb.find_one( { 'name': nbayes_model["name"], 'version': nbayes_model["version"] } )["serializedModelId"]
-            serialized_model_nbayes = potic_gridfs.get(serialized_model_nbayes_id)
+            serialized_model_nbayes = potic_gridfs.get(ObjectId(serialized_model_nbayes_id)).read()
             model_nbayes = pickle.loads(serialized_model_nbayes)
 
             model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
@@ -221,7 +222,7 @@ def rank(model_id):
 
         if model_id == svm_model["name"] + ":" + svm_model["version"]:
             serialized_model_svm_id = models_mongodb.find_one( { 'name': svm_model["name"], 'version': svm_model["version"] } )["serializedModelId"]
-            serialized_model_svm = potic_gridfs.get(serialized_model_svm_id)
+            serialized_model_svm = potic_gridfs.get(ObjectId(serialized_model_svm_id)).read()
             model_svm = pickle.loads(serialized_model_svm)
 
             model_input = np.array([(word_count, skipped_count, showed_count, source)], dtype=[('word_count', 'int'), ('skipped_count', 'int'), ('showed_count', 'int'), ('source', 'object')])
